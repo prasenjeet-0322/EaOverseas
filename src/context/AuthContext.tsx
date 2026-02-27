@@ -14,11 +14,24 @@ interface AuthContextType {
     user: User | null;
     login: (email: string, password: string) => Promise<User>;
     signup: (userDetails: any) => Promise<User>;
+    verifyOTP: (email: string, otp: string) => Promise<User>;
+    resendOTP: (email: string) => Promise<void>;
+    forgotPassword: (email: string) => Promise<void>;
+    resetPassword: (email: string, otp: string, newPassword: string) => Promise<void>;
     logout: () => void;
     loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+// Custom hook to use auth context
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -32,31 +45,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(JSON.parse(storedUser));
             } catch (e) {
                 console.error("Failed to parse stored user", e);
+                localStorage.removeItem('eaoverseas_user');
             }
         }
         setLoading(false);
     }, []);
 
-    const login = (email: string, password: string): Promise<User> => {
-        return new Promise((resolve, reject) => {
+    const safeJson = async (res: Response) => {
+        const text = await res.text();
+        try {
+            return text ? JSON.parse(text) : {}; // Handle empty response
+        } catch (e) {
+            console.error("JSON Parse Error:", e, "Response Text:", text);
+            throw new Error(text || res.statusText || "Server Error");
+        }
+    };
+
+    const login = async (email: string, password: string): Promise<User> => {
+        try {
             // ADMIN LOGIN (Full/Demo Mode)
             if (email === 'alex.j@example.com' && password === '5678') {
-                const adminUser: User = {
-                    id: 'USER_ADMIN_001',
+                const adminUser = {
+                    id: 'demo-1',
                     name: 'Alex Johnson',
                     email: 'alex.j@example.com',
-                    isDemo: true, // This flag enables all the AI/Pre-filled content
+                    role: 'Student',
+                    isDemo: true,
                 };
                 setUser(adminUser);
                 localStorage.setItem('eaoverseas_user', JSON.stringify(adminUser));
-                resolve(adminUser);
-                return;
+                return adminUser;
+            }
+
+            // UNIVERSITY LOGIN (Demo Mode)
+            if (email === 'admin@university.edu' && password === 'UNIV2026') {
+                const uniUser = {
+                    id: 'demo-2',
+                    name: 'University Admin',
+                    email: 'admin@university.edu',
+                    role: 'University',
+                    isDemo: true,
+                };
+                setUser(uniUser);
+                localStorage.setItem('eaoverseas_user', JSON.stringify(uniUser));
+                return uniUser;
             }
 
             // COUNSELLOR LOGIN (Demo Mode)
             if (email === 'partner@counsellor.com' && password === 'COUNSELLOR2026') {
-                const counsellorUser: User = {
-                    id: 'USER_COUNSELLOR_001',
+                const counsellorUser = {
+                    id: 'demo-3',
                     name: 'Dr. Alex Morgan',
                     email: 'partner@counsellor.com',
                     role: 'Counsellor',
@@ -64,67 +102,143 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 };
                 setUser(counsellorUser);
                 localStorage.setItem('eaoverseas_user', JSON.stringify(counsellorUser));
-                resolve(counsellorUser);
-                return;
+                return counsellorUser;
+            }
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (!res.ok) {
+                const errorData = await safeJson(res);
+                throw new Error(errorData.msg || errorData.message || 'Login failed');
             }
 
-            // CHECK REGISTERED USERS
-            const registeredUsers = JSON.parse(localStorage.getItem('eaoverseas_registered_users') || '[]');
-            const foundUser = registeredUsers.find((u: any) => u.email === email && u.password === password);
-
-            if (foundUser) {
-                // Ensure isDemo is false for real users
-                const realUser: User = { ...foundUser, isDemo: false };
-                delete (realUser as any).password; // Don't store password in session
-                setUser(realUser);
-                localStorage.setItem('eaoverseas_user', JSON.stringify(realUser));
-                resolve(realUser);
-            } else {
-                reject(new Error('Invalid credentials. Only admin@eaoverseas.com or registered users allowed.'));
-            }
-        });
+            const data = await safeJson(res);
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('eaoverseas_user', JSON.stringify(data.user));
+            setUser(data.user);
+            return data.user;
+        } catch (error) {
+            console.error("Login error:", error);
+            throw error;
+        }
     };
 
-    const signup = (userDetails: any): Promise<User> => {
-        return new Promise((resolve) => {
-            const newUser: User = {
-                ...userDetails,
-                id: `USER_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-                isDemo: false, // Fresh account
-                createdAt: new Date().toISOString()
-            };
+    const signup = async (userDetails: any): Promise<User> => {
+        try {
+            const res = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userDetails)
+            });
 
-            // Store in "DB" (localStorage)
-            const registeredUsers = JSON.parse(localStorage.getItem('eaoverseas_registered_users') || '[]');
-            registeredUsers.push(newUser);
-            localStorage.setItem('eaoverseas_registered_users', JSON.stringify(registeredUsers));
+            if (!res.ok) {
+                const errorData = await safeJson(res);
+                throw new Error(errorData.msg || errorData.message || 'Signup failed');
+            }
 
-            // Auto login
-            const sessionUser = { ...newUser };
-            delete (sessionUser as any).password;
-            setUser(sessionUser);
-            localStorage.setItem('eaoverseas_user', JSON.stringify(sessionUser));
+            // Return intermediate user object with email for verification step
+            // We don't get a full user yet, just confirmation OTP was sent
+            // Construct a temp user object or just return email wrapper
+            return { id: 'pending', email: userDetails.email, name: userDetails.name } as User;
+        } catch (error) {
+            console.error("Signup error:", error);
+            throw error;
+        }
+    };
 
-            resolve(sessionUser);
-        });
+    const verifyOTP = async (email: string, otp: string): Promise<User> => { // Changed userId to email
+        try {
+            const res = await fetch('/api/auth/verify-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otp }) // Sending email and otp
+            });
+
+            if (!res.ok) {
+                const errorData = await safeJson(res);
+                throw new Error(errorData.msg || errorData.message || 'Verification failed');
+            }
+
+            const data = await safeJson(res);
+
+            // On success, store token and user
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('eaoverseas_user', JSON.stringify(data.user));
+            setUser(data.user);
+
+            return data.user;
+        } catch (error) {
+            console.error("Verification error:", error);
+            throw error;
+        }
+    };
+
+    const resendOTP = async (email: string): Promise<void> => {
+        try {
+            const res = await fetch('/api/auth/resend-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+
+            if (!res.ok) {
+                const errorData = await safeJson(res);
+                throw new Error(errorData.msg || errorData.message || 'Resend failed');
+            }
+        } catch (error) {
+            console.error("Resend OTP error:", error);
+            throw error;
+        }
+    };
+
+    const forgotPassword = async (email: string): Promise<void> => {
+        try {
+            const res = await fetch('/api/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+
+            if (!res.ok) {
+                const errorData = await safeJson(res);
+                throw new Error(errorData.msg || errorData.message || 'Failed to send password reset OTP');
+            }
+        } catch (error) {
+            console.error("Forgot Password error:", error);
+            throw error;
+        }
+    };
+
+    const resetPassword = async (email: string, otp: string, newPassword: string): Promise<void> => {
+        try {
+            const res = await fetch('/api/auth/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otp, newPassword })
+            });
+
+            if (!res.ok) {
+                const errorData = await safeJson(res);
+                throw new Error(errorData.msg || errorData.message || 'Password reset failed');
+            }
+        } catch (error) {
+            console.error("Reset Password error:", error);
+            throw error;
+        }
     };
 
     const logout = () => {
         setUser(null);
         localStorage.removeItem('eaoverseas_user');
+        localStorage.removeItem('token');
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, signup, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, signup, verifyOTP, resendOTP, forgotPassword, resetPassword, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
 };

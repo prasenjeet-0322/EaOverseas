@@ -1011,16 +1011,16 @@ const CommunityFeed = () => {
                                             <div className="w-12 bg-gray-50 border-r border-gray-100 flex flex-col items-center py-3 gap-1 shrink-0">
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleVote(post.id, 'up'); }}
-                                                    className="text-gray-400 hover:text-primary hover:bg-blue-50 rounded p-1 transition-colors"
+                                                    className={`rounded p-1 transition-colors ${post.userVote === 1 ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'}`}
                                                 >
-                                                    <span className="material-symbols-outlined text-[20px]">arrow_upward</span>
+                                                    <span className={`material-symbols-outlined text-[20px] ${post.userVote === 1 ? 'fill-current' : ''}`}>thumb_up</span>
                                                 </button>
-                                                <span className={`text-sm font-bold ${post.votes > 0 ? 'text-primary' : post.votes < 0 ? 'text-red-600' : 'text-gray-900'}`}>{post.votes}</span>
+                                                <span className={`text-sm font-bold ${post.votes > 0 ? 'text-blue-600' : post.votes < 0 ? 'text-red-600' : 'text-gray-900'}`}>{post.votes}</span>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleVote(post.id, 'down'); }}
-                                                    className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded p-1 transition-colors"
+                                                    className={`rounded p-1 transition-colors ${post.userVote === -1 ? 'bg-red-600 text-white' : 'text-gray-400 hover:text-red-600 hover:bg-red-50'}`}
                                                 >
-                                                    <span className="material-symbols-outlined text-[20px]">arrow_downward</span>
+                                                    <span className={`material-symbols-outlined text-[20px] ${post.userVote === -1 ? 'fill-current' : ''}`}>thumb_down</span>
                                                 </button>
                                             </div>
                                             {/* Content */}
@@ -1149,16 +1149,16 @@ const CommunityFeed = () => {
                                                                             <div className="flex items-center gap-1">
                                                                                 <button
                                                                                     onClick={() => handleCommentVote(post.id, idx, 'up')}
-                                                                                    className={`flex items-center gap-1 transition-colors ${comment.userVote === 1 ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'}`}
+                                                                                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors ${comment.userVote === 1 ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'}`}
                                                                                 >
-                                                                                    <span className={`material-symbols-outlined !text-[16px] ${comment.userVote === 1 ? 'fill-current' : ''}`}>arrow_upward</span>
+                                                                                    <span className={`material-symbols-outlined !text-[16px] ${comment.userVote === 1 ? 'fill-current' : ''}`}>thumb_up</span>
                                                                                     <span className="text-xs font-semibold">{comment.upvotes || 0}</span>
                                                                                 </button>
                                                                                 <button
                                                                                     onClick={() => handleCommentVote(post.id, idx, 'down')}
-                                                                                    className={`transition-colors ${comment.userVote === -1 ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+                                                                                    className={`px-1.5 py-0.5 rounded transition-colors ${comment.userVote === -1 ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-red-600 hover:bg-red-50'}`}
                                                                                 >
-                                                                                    <span className={`material-symbols-outlined !text-[16px] ${comment.userVote === -1 ? 'fill-current' : ''}`}>arrow_downward</span>
+                                                                                    <span className={`material-symbols-outlined !text-[16px] ${comment.userVote === -1 ? 'fill-current' : ''}`}>thumb_down</span>
                                                                                 </button>
                                                                             </div>
                                                                             <button

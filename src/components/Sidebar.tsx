@@ -17,7 +17,6 @@ const Sidebar = ({ isOpen, onClose, user }) => {
         { name: 'Community Feed', icon: 'forum', path: '/community-feed' },
         { name: 'Universities', icon: 'school', path: '/colleges' },
         { name: 'Courses', icon: 'book', path: '/courses' },
-        { name: 'AI Profile Analyzer & AI Assistance', icon: 'auto_awesome', path: '/ai-profile' },
         { name: 'Home Dashboard', icon: 'dashboard', path: '/dashboard' },
         { name: 'Test Prep', icon: 'quiz', path: '/test-prep' },
         { name: 'Accommodation', icon: 'home_work', path: '/accommodation' },
@@ -67,7 +66,6 @@ const Sidebar = ({ isOpen, onClose, user }) => {
                         if (!user && (
                             item.path === '/loans' ||
                             item.path === '/visas' ||
-                            item.path === '/ai-profile' ||
                             item.path === '/consultant'
                         )) return null;
 
@@ -101,10 +99,10 @@ const Sidebar = ({ isOpen, onClose, user }) => {
                                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'
                                     }`}
                             >
-                                <span className={`material-symbols-outlined ${item.icon === 'auto_awesome' ? 'mt-0.5' : ''} ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
+                                <span className={`material-symbols-outlined ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
                                     {item.icon}
                                 </span>
-                                <span className={`text-sm ${item.icon === 'auto_awesome' ? 'leading-tight' : ''}`}>
+                                <span className="text-sm">
                                     {item.name}
                                 </span>
                             </Link>

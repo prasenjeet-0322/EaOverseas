@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
+import { getSettings, updateSettings } from '../services/settingsService';
 
 const NotificationPreferences = () => {
     // State for toggles
+    const [loading, setLoading] = useState(true);
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [inAppAlerts, setInAppAlerts] = useState(true);
     const [uniStatusUpdates, setUniStatusUpdates] = useState(true);
@@ -13,10 +14,52 @@ const NotificationPreferences = () => {
     const [newUniRecs, setNewUniRecs] = useState(false);
     const [scholarshipOps, setScholarshipOps] = useState(true);
 
+    // Mute State
+    const [mutedGroups, setMutedGroups] = useState<string[]>([]);
+    const [mutedUsers, setMutedUsers] = useState<string[]>([]);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const settings = await getSettings();
+                if (settings) {
+                    // Map backend settings to local state
+                    if (settings.notifications) {
+                        setEmailNotifications(settings.notifications.email);
+                        setInAppAlerts(settings.notifications.push);
+                    }
+                    if (settings.mutedGroups) setMutedGroups(settings.mutedGroups);
+                    if (settings.mutedUsers) setMutedUsers(settings.mutedUsers);
+                }
+            } catch (error) {
+                console.error("Failed to load settings", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSettings();
+    }, []);
+
+
+    const handleSave = async () => {
+        try {
+            await updateSettings({
+                notifications: {
+                    email: emailNotifications,
+                    push: inAppAlerts
+                },
+                mutedGroups,
+                mutedUsers
+            });
+            alert('Settings saved successfully');
+        } catch (error) {
+            alert('Failed to save settings');
+        }
+    };
+
     return (
         <div className="flex flex-col flex-1 h-full overflow-hidden bg-[#f8f9fc] relative">
-
-
             <div className="flex-1 overflow-y-auto p-3 md:p-8 flex justify-center">
                 <div className="w-full max-w-4xl space-y-6 pb-12">
                     {/* Page Heading */}
@@ -172,13 +215,53 @@ const NotificationPreferences = () => {
                             </div>
                         </div>
 
+                        {/* Section 3: Muted Channels */}
+                        <div className="p-4 md:p-6 border-t border-slate-100">
+                            <h3 className="text-base md:text-lg font-semibold text-[#111418] mb-6 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-slate-400">moff</span>
+                                Muted Channels
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 className="text-sm font-medium text-[#111418] mb-2">Muted Groups</h4>
+                                    {mutedGroups.length === 0 ? (
+                                        <p className="text-xs text-slate-500 italic">No muted groups.</p>
+                                    ) : (
+                                        <ul className="space-y-2">
+                                            {mutedGroups.map(group => (
+                                                <li key={group} className="flex justify-between items-center text-sm bg-slate-50 p-2 rounded">
+                                                    <span>{group}</span>
+                                                    <button onClick={() => setMutedGroups(mutedGroups.filter(g => g !== group))} className="text-red-500 text-xs">Unmute</button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-medium text-[#111418] mb-2">Muted Users</h4>
+                                    {mutedUsers.length === 0 ? (
+                                        <p className="text-xs text-slate-500 italic">No muted users.</p>
+                                    ) : (
+                                        <ul className="space-y-2">
+                                            {mutedUsers.map(user => (
+                                                <li key={user} className="flex justify-between items-center text-sm bg-slate-50 p-2 rounded">
+                                                    <span>{user}</span>
+                                                    <button onClick={() => setMutedUsers(mutedUsers.filter(u => u !== user))} className="text-red-500 text-xs">Unmute</button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Action Footer */}
                         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
                             <button className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-200 transition-colors">
                                 Reset to Default
                             </button>
-                            <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 shadow-sm shadow-blue-200 transition-colors">
-                                Save Changes
+                            <button onClick={handleSave} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 shadow-sm shadow-blue-200 transition-colors">
+                                {loading ? 'Saving...' : 'Save Changes'}
                             </button>
                         </div>
                     </div>
@@ -191,9 +274,9 @@ const NotificationPreferences = () => {
                             <p className="text-xs md:text-sm text-slate-600">Some notifications related to government compliance and visa deadlines cannot be disabled to ensure you don't miss legally required steps.</p>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
+                </div >
+            </div >
+        </div >
     );
 };
 

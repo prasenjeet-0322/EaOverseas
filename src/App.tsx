@@ -16,6 +16,7 @@ import BlogDetails from './pages/BlogDetails';
 import Testimonials from './pages/Testimonials';
 import StudentStory from './pages/StudentStory';
 import HomeDashboard from './pages/HomeDashboard';
+import Stats from './pages/Stats';
 import Courses from './pages/Courses';
 import Feed from './pages/Feed';
 import CommunityFeed from './pages/CommunityFeed';
@@ -61,7 +62,6 @@ import LenderSelection from './pages/LenderSelection';
 import LoanApplicationTimeline from './pages/LoanApplicationTimeline';
 import ConfirmAdmission from './pages/ConfirmAdmission';
 import VisaDocumentUpload from './pages/VisaDocumentUpload';
-import AskAI from './pages/AskAI';
 import TestPrep from './pages/TestPrep';
 import TestOverview from './pages/TestOverview';
 import ListeningTest from './pages/ListeningTest';
@@ -91,6 +91,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import Verification from './pages/Verification';
 import UniversityVerification from './pages/UniversityVerification';
 import UniversityPendingVerification from './pages/UniversityPendingVerification';
+import LinkedinCallback from './pages/LinkedinCallback';
 
 import { SavedItemsProvider } from './context/SavedItemsContext';
 import { UserProfileProvider } from './context/UserProfileContext';
@@ -143,6 +144,7 @@ function App() {
                                 <Route path="accommodation" element={<Accommodation />} />
                                 <Route path="accommodation-details" element={<AccommodationDetails />} />
                                 <Route path="applications" element={<ApplicationDashboard />} />
+                                <Route path="stats" element={<Stats />} />
                                 <Route path="documents" element={<DocumentsDashboard />} />
                                 <Route path="profile" element={<MyProfile />} />
                                 <Route path="profile/edit" element={<EditProfile />} />
@@ -166,7 +168,6 @@ function App() {
                                 <Route path="loan-application-timeline" element={<LoanApplicationTimeline />} />
                                 <Route path="/visa-application/confirm" element={<ConfirmAdmission />} />
                                 <Route path="/visa-application/documents" element={<VisaDocumentUpload />} />
-                                <Route path="ai-profile" element={<AskAI />} />
                                 <Route path="test-prep/reading-instructions" element={<ReadingTestInstructions />} />
                                 <Route path="test-prep/reading/submitted" element={<ReadingTestSubmitted />} />
                                 <Route path="test-prep/writing-instructions" element={<WritingTestInstructions />} />
@@ -214,6 +215,7 @@ function App() {
 
                             {/* Auth Routes */}
                             <Route path="/login" element={<Login />} />
+                            <Route path="/linkedin" element={<LinkedinCallback />} />
                             <Route path="/signup" element={<Signup />} />
                             <Route path="/forgot-password" element={<ForgotPassword />} />
                             <Route path="/verification" element={<Verification />} />

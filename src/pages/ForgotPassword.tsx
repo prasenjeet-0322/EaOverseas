@@ -4,37 +4,33 @@ import { useAuth } from '../context/AuthContext';
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
-    const { login } = useAuth();
-    const [step, setStep] = useState(1); // 1: Email, 2: Code
+    const { forgotPassword, resetPassword } = useAuth();
+    const [step, setStep] = useState(1); // 1: Email, 2: Code & New Password
     const [email, setEmail] = useState('');
     const [code, setCode] = useState(['', '', '', '', '', '']);
+    const [newPassword, setNewPassword] = useState('');
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // Hardcoded verification code for demo
-    const DEMO_CODE = '123456';
-
-    const handleSendCode = (e) => {
+    const handleSendCode = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setSuccess('');
         setLoading(true);
 
-        // Simulate API call
-        setTimeout(() => {
+        try {
+            await forgotPassword(email);
+            setStep(2);
+            setSuccess('Verification code sent to your email.');
+        } catch (err: any) {
+            setError(err.message || 'Failed to send verification code.');
+        } finally {
             setLoading(false);
-            if (email === 'alex.j@example.com') {
-                setStep(2);
-            } else {
-                setError('This email does not exist in this website');
-                // Auto-hide error after 2 seconds
-                setTimeout(() => {
-                    setError('');
-                }, 2000);
-            }
-        }, 1500);
+        }
     };
 
-    const handleCodeChange = (index, value) => {
+    const handleCodeChange = (index: number, value: string) => {
         if (value.length > 1) return; // Prevent multiple chars
 
         const newCode = [...code];
@@ -48,43 +44,41 @@ const ForgotPassword = () => {
         }
     };
 
-    const handleKeyDown = (index, e) => {
+    const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
         if (e.key === 'Backspace' && !code[index] && index > 0) {
             const prevInput = document.getElementById(`code-${index - 1}`);
             if (prevInput) prevInput.focus();
         }
     };
 
-    const handleVerify = async (e) => {
+    const handleVerifyAndReset = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setSuccess('');
+
         const enteredCode = code.join('');
+        if (enteredCode.length !== 6) {
+            setError('Please enter the complete 6-digit code.');
+            return;
+        }
 
-        if (enteredCode === DEMO_CODE) {
-            setLoading(true);
-            try {
-                // For demo, we just log them in as the admin or new user depending on email? 
-                // Or just the generic admin for simplicity if it matches alex?
-                // The user said "after entering that code we can login". 
-                // So let's try to login with the email provided and a dummy password or just force a login state.
-                // Since our AuthContext needs a password, we might need a "passwordless login" method or just simulate it.
-                // For now, let's assume if it's Alex, we log in as Alex.
+        if (newPassword.length < 6) {
+            setError('Password must be at least 6 characters long.');
+            return;
+        }
 
-                let passwordToUse = 'password';
-                if (email === 'alex.j@example.com') passwordToUse = '5678'; // Using known password for demo continuity
+        setLoading(true);
 
-                await login(email, passwordToUse);
-                navigate('/');
-            } catch (err) {
-                // If login fails (e.g. fresh user with unknown password), we might just force a session
-                // But for this task, let's keep it simple.
-                // If it fails, we show "Login Successful" and redirect manually?
-                // Let's actually simulate a successful reset -> login flow.
-                navigate('/');
-            }
+        try {
+            await resetPassword(email, enteredCode, newPassword);
+            setSuccess('Password reset successfully! Redirecting to login...');
+            setTimeout(() => {
+                navigate('/login');
+            }, 2000);
+        } catch (err: any) {
+            setError(err.message || 'Failed to reset password. Invalid code or expired session.');
+        } finally {
             setLoading(false);
-        } else {
-            setError('Invalid code. Please try again.');
         }
     };
 
@@ -121,21 +115,27 @@ const ForgotPassword = () => {
                             </div>
                         </div>
                         <h1 className="text-3xl font-black text-slate-900 mb-3 text-left">
-                            {step === 1 ? 'Forgot Password?' : 'Check your email'}
+                            {step === 1 ? 'Forgot Password?' : 'Reset Password'}
                         </h1>
                         <p className="text-slate-500">
                             {step === 1
                                 ? "Enter your email address and we'll send you a verification code to get back into your account."
-                                : `We've sent a 6-digit verification code to ${email}. The code expires in 15 minutes.`
+                                : `We've sent a 6-digit verification code to ${email}. Enter it below along with your new password.`
                             }
                         </p>
                     </div>
 
-                    {/* Error Message */}
+                    {/* Error/Success Message */}
                     {error && (
                         <div className="mb-6 bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-100 flex items-center gap-2 animate-shake">
                             <span className="material-symbols-outlined text-[18px]">error</span>
                             {error}
+                        </div>
+                    )}
+                    {success && (
+                        <div className="mb-6 bg-green-50 text-green-600 text-sm p-3 rounded-lg border border-green-100 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                            {success}
                         </div>
                     )}
 
@@ -165,9 +165,9 @@ const ForgotPassword = () => {
                         </form>
                     )}
 
-                    {/* Step 2: Code Verification Form */}
+                    {/* Step 2: Code Verification & Reset Form */}
                     {step === 2 && (
-                        <form onSubmit={handleVerify} className="space-y-6">
+                        <form onSubmit={handleVerifyAndReset} className="space-y-6">
                             <div className="space-y-1.5">
                                 <label className="text-sm font-bold text-slate-900 ml-1">Verification Code</label>
                                 <div className="flex gap-2 justify-between">
@@ -176,7 +176,7 @@ const ForgotPassword = () => {
                                             key={index}
                                             id={`code-${index}`}
                                             type="text"
-                                            maxLength="1"
+                                            maxLength={1}
                                             value={digit}
                                             onChange={(e) => handleCodeChange(index, e.target.value)}
                                             onKeyDown={(e) => handleKeyDown(index, e)}
@@ -185,9 +185,19 @@ const ForgotPassword = () => {
                                         />
                                     ))}
                                 </div>
-                                <p className="text-xs text-center text-slate-400 mt-2">
-                                    Use code <span className="font-mono font-bold text-slate-600 bg-slate-100 px-1 rounded">123456</span> for demo
-                                </p>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-bold text-slate-900 ml-1">New Password</label>
+                                <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    className="w-full h-12 px-4 rounded-xl bg-gray-50 border-gray-200 border focus:bg-white focus:border-[#0d6cf2] focus:ring-4 focus:ring-[#0d6cf2]/10 transition-all outline-none text-slate-900 font-medium placeholder:text-gray-400"
+                                    placeholder="Enter new password (min 6 chars)"
+                                    required
+                                    minLength={6}
+                                />
                             </div>
 
                             <button
@@ -195,13 +205,13 @@ const ForgotPassword = () => {
                                 className="w-full h-12 bg-[#0d6cf2] hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                             >
                                 {loading && <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>}
-                                {loading ? 'Verifying...' : 'Verify & Login'}
+                                {loading ? 'Resetting...' : 'Reset Password'}
                             </button>
 
                             <div className="text-center">
                                 <p className="text-sm text-slate-500">
                                     Didn't receive the code?{' '}
-                                    <button type="button" onClick={() => { setStep(1); setCode(['', '', '', '', '', '']); }} className="text-[#0d6cf2] font-bold hover:underline">
+                                    <button type="button" onClick={handleSendCode} disabled={loading} className="text-[#0d6cf2] font-bold hover:underline bg-transparent border-none cursor-pointer">
                                         Resend
                                     </button>
                                 </p>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+
 
 const Login = () => {
     const navigate = useNavigate();
@@ -16,6 +18,73 @@ const Login = () => {
         'Student': { email: 'alex.j@example.com', pass: '5678' },
         'University': { email: 'admin@university.edu', pass: 'UNIV2026' },
         'Counsellor': { email: 'partner@counsellor.com', pass: 'COUNSELLOR2026' }
+    };
+
+    const loginGoogle = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: {
+                        Authorization: `Bearer ${tokenResponse.access_token}`,
+                    },
+                });
+                const payload = await res.json();
+
+                // Check if user exists in our mock DB
+                const registeredUsers = JSON.parse(localStorage.getItem('eaoverseas_registered_users') || '[]');
+                const existingUser = registeredUsers.find((u: any) => u.email === payload.email);
+
+                if (!existingUser) {
+                    // User not found, redirect to signup with pre-filled data
+                    navigate('/signup', {
+                        state: {
+                            googleUser: {
+                                name: payload.name,
+                                email: payload.email,
+                                picture: payload.picture
+                            }
+                        }
+                    });
+                    return;
+                }
+
+                // Store the token (access token in this case)
+                localStorage.setItem('google_token', tokenResponse.access_token);
+
+                // Create user object for session (using existing user data + google picture if needed)
+                const user = {
+                    ...existingUser,
+                    picture: payload.picture,
+                    isDemo: false
+                };
+
+                // Store user session
+                localStorage.setItem('eaoverseas_user', JSON.stringify(user));
+
+                // Redirect
+                navigate('/dashboard');
+                window.location.reload();
+            } catch (error) {
+                console.error("Error fetching Google User Info:", error);
+                alert("Failed to fetch user info from Google.");
+            }
+        },
+        onError: () => {
+            console.log("Login Failed");
+            alert("Google Login Failed");
+        }
+    });
+    const handleLinkedInLogin = () => {
+        const clientId = import.meta.env.VITE_LINKEDIN_CLIENT_ID;
+        const redirectUri = "http://localhost:5173/linkedin";
+        const scope = "openid profile email";
+
+        window.location.href =
+            `https://www.linkedin.com/oauth/v2/authorization` +
+            `?response_type=code` +
+            `&client_id=${clientId}` +
+            `&redirect_uri=${redirectUri}` +
+            `&scope=${scope}`;
     };
 
     const handleLogin = async (e) => {
@@ -216,8 +285,17 @@ const Login = () => {
 
                         {/* Social Login */}
                         <div className="grid grid-cols-3 gap-2">
-                            <button type="button" className="flex items-center justify-center gap-2 h-9 lg:h-11 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all text-xs lg:text-sm font-bold text-slate-700">
-                                <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
+                            <button
+                                type="button"
+                                onClick={() => loginGoogle()}
+                                className="flex items-center justify-center gap-2 h-9 lg:h-11 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all text-xs lg:text-sm font-bold text-slate-700"
+                            >
+                                <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                                </svg>
                                 <span className="hidden sm:inline">Google</span>
                             </button>
                             <button type="button" className="flex items-center justify-center gap-2 h-9 lg:h-11 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all text-xs lg:text-sm font-bold text-slate-700">
@@ -226,7 +304,11 @@ const Login = () => {
                                 </svg>
                                 <span className="hidden sm:inline">Apple</span>
                             </button>
-                            <button type="button" className="flex items-center justify-center gap-2 h-9 lg:h-11 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all text-xs lg:text-sm font-bold text-slate-700">
+                            <button
+                                type="button"
+                                onClick={handleLinkedInLogin}
+                                className="flex items-center justify-center gap-2 h-9 lg:h-11 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all text-xs lg:text-sm font-bold text-slate-700"
+                            >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#0077b5" viewBox="0 0 16 16">
                                     <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z" />
                                 </svg>
@@ -242,11 +324,26 @@ const Login = () => {
                             Continue as Guest
                         </button>
 
-                        <div className="p-2.5 lg:p-4 bg-blue-50 rounded-lg border border-blue-100 text-center transition-all">
-                            <p className="text-[10px] lg:text-xs text-blue-600 font-bold uppercase tracking-wider mb-0 lg:mb-1">Demo Access</p>
-                            <div className="flex justify-center gap-2 lg:gap-4 mt-1 lg:mt-2">
-                                <span className="text-[10px] lg:text-xs text-slate-600">Email: <span className="font-mono font-bold">{demoCredentials[selectedRole].email}</span></span>
-                                <span className="text-[10px] lg:text-xs text-slate-600">Pass: <span className="font-mono font-bold">{demoCredentials[selectedRole].pass}</span></span>
+                        <div className="p-3 lg:p-4 bg-blue-50/50 rounded-xl border border-blue-100 text-center transition-all group">
+                            <div className="flex flex-col gap-2">
+                                <div>
+                                    <p className="text-[10px] lg:text-xs text-blue-600 font-bold uppercase tracking-wider mb-1 lg:mb-1.5">Demo Access</p>
+                                    <div className="flex justify-center gap-3 lg:gap-5">
+                                        <span className="text-[10px] lg:text-xs text-slate-600 font-medium">Email: <span className="font-mono font-bold text-slate-800">{demoCredentials[selectedRole].email}</span></span>
+                                        <span className="text-[10px] lg:text-xs text-slate-600 font-medium">Pass: <span className="font-mono font-bold text-slate-800">{demoCredentials[selectedRole].pass}</span></span>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEmail(demoCredentials[selectedRole].email);
+                                        setPassword(demoCredentials[selectedRole].pass);
+                                    }}
+                                    className="mt-1 mx-auto px-4 py-1.5 lg:py-2 bg-white hover:bg-blue-600 text-[#0d6cf2] hover:text-white border border-[#0d6cf2]/20 hover:border-transparent text-xs font-bold rounded-lg transition-all shadow-sm flex items-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-[16px]">magic_button</span>
+                                    Auto-fill Demo Credentials
+                                </button>
                             </div>
                         </div>
 

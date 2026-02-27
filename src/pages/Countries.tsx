@@ -8,14 +8,6 @@ const Countries = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    const handleAIAssistant = () => {
-        if (user) {
-            navigate('/ai-profile');
-        } else {
-            navigate('/login', { state: { from: '/ai-profile' } });
-        }
-    };
-
     const destinations = [
         {
             name: 'United States',
@@ -229,50 +221,6 @@ const Countries = () => {
                         </div>
                     </section>
 
-                    {/* AI Callout Section */}
-                    <section className="px-4 md:px-6 relative z-10">
-                        <div className="max-w-4xl mx-auto rounded-[2rem] md:rounded-[3rem] relative overflow-hidden text-center p-6 md:p-16 border border-white/60 shadow-[0_20px_50px_-12px_rgba(36,99,235,0.15)] bg-gradient-to-br from-white/80 via-white/50 to-white/80 backdrop-blur-xl">
-                            {/* Designer Background Elements */}
-                            <div className="absolute -top-24 -right-24 size-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
-                            <div className="absolute -bottom-24 -left-24 size-96 bg-[#2463eb]/15 rounded-full blur-3xl pointer-events-none"></div>
-
-                            {/* Flowing Lines SVG */}
-                            <div className="absolute inset-0 opacity-[0.08] pointer-events-none">
-                                <svg className="w-full h-full" viewBox="0 0 800 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M0,100 C150,200 350,0 500,100 C650,200 750,50 800,150" stroke="#2463eb" strokeWidth="2" fill="none" />
-                                    <path d="M0,200 C200,100 300,300 500,200 C700,100 800,250 800,250" stroke="#2463eb" strokeWidth="2" fill="none" />
-                                    <path d="M0,300 C100,200 400,400 600,300 C750,200 800,350 800,350" stroke="#2463eb" strokeWidth="1.5" fill="none" />
-                                </svg>
-                            </div>
-
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.8)_0%,transparent_100%)] pointer-events-none"></div>
-
-                            <div className="relative z-10 flex flex-col items-center">
-                                <div className="size-12 md:size-16 rounded-2xl bg-gradient-to-br from-[#2463eb]/10 to-[#2463eb]/5 flex items-center justify-center mb-4 md:mb-8 ring-1 ring-[#2463eb]/20 shadow-lg shadow-blue-500/10 group-hover:scale-110 transition-transform duration-500">
-                                    <span className="material-symbols-outlined text-[#2463eb] text-2xl md:text-3xl">auto_awesome</span>
-                                </div>
-
-                                <h2 className="text-2xl md:text-4xl font-black mb-3 md:mb-6 tracking-tight text-slate-900 leading-tight">
-                                    Still not sure where to go?
-                                </h2>
-
-                                <p className="text-slate-600 mb-6 md:mb-10 text-sm md:text-lg max-w-xl mx-auto leading-relaxed">
-                                    Our AI advisor can suggest the perfect country and university based on your background and career goals.
-                                </p>
-
-                                <button
-                                    onClick={handleAIAssistant}
-                                    className="group relative overflow-hidden rounded-xl md:rounded-2xl bg-[#2463eb] px-6 py-3 md:px-10 md:py-4 text-white font-bold shadow-xl shadow-blue-600/20 transition-all hover:scale-105 hover:shadow-blue-600/40"
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                                    <span className="relative flex items-center gap-2 md:gap-3 text-sm md:text-base">
-                                        Try AI Assistant
-                                        <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-                    </section>
                 </div>
             </main>
 

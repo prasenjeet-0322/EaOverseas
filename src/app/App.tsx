@@ -50,7 +50,6 @@ import LenderSelection from './pages/LenderSelection';
 import LoanApplicationTimeline from './pages/LoanApplicationTimeline';
 import ConfirmAdmission from './pages/ConfirmAdmission';
 import VisaDocumentUpload from './pages/VisaDocumentUpload';
-import AskAI from './pages/AskAI';
 import TestPrep from './pages/TestPrep';
 import TestOverview from './pages/TestOverview';
 import ListeningTest from './pages/ListeningTest';
@@ -138,7 +137,6 @@ function App() {
                                 <Route path="loan-application-timeline" element={<LoanApplicationTimeline />} />
                                 <Route path="/visa-application/confirm" element={<ConfirmAdmission />} />
                                 <Route path="/visa-application/documents" element={<VisaDocumentUpload />} />
-                                <Route path="ai-profile" element={<AskAI />} />
                                 <Route path="test-prep/reading-instructions" element={<ReadingTestInstructions />} />
                                 <Route path="test-prep/reading/submitted" element={<ReadingTestSubmitted />} />
                                 <Route path="test-prep/writing-instructions" element={<WritingTestInstructions />} />

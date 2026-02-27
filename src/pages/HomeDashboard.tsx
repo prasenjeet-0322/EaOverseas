@@ -187,7 +187,7 @@ const HomeDashboard = () => {
                     </section>
 
                     {/* Quick Action Cards */}
-                    <section className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                    <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                         {/* Upload Documents */}
                         <div
                             onClick={() => navigate('/documents')}
@@ -229,6 +229,20 @@ const HomeDashboard = () => {
                                 <p className="text-xs md:text-sm text-gray-500 mt-0.5">
                                     {isFreshUser ? "No active applications" : `${userProfile.applications?.length || 0} applications in progress`}
                                 </p>
+                            </div>
+                        </div>
+
+                        {/* View Statistics */}
+                        <div
+                            onClick={() => navigate('/stats')}
+                            className="flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-xl hover:shadow-md transition-all cursor-pointer group"
+                        >
+                            <div className="size-10 md:size-12 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                                <span className="material-symbols-outlined !text-[20px] md:!text-[24px]">analytics</span>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900 text-sm md:text-base">View Statistics</h3>
+                                <p className="text-xs md:text-sm text-gray-500 mt-0.5">Real-time metrics</p>
                             </div>
                         </div>
                     </section>
